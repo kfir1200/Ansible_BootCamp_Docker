@@ -1,0 +1,8 @@
+#ignore var file with secret password
+/inventories/prod/group_vars/main.yml
+
+#ignore var file with secret password
+/inventories/stage/group_vars/main.yml
+#ignore idea folder
+.idea/
+

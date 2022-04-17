@@ -3,7 +3,7 @@
   become: true
  
   vars_files:
-    - "{{ env_file_path}}"
+    - "{{ env_file_path }}"
     - "{{ acr_secrets_path }}"
 
   roles:

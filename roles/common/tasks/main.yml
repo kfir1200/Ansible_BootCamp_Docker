@@ -1,0 +1,67 @@
+---
+   - name: install Docker dependency
+     apt:
+       name: "{{ item }}"
+       state: present
+       update_cache: yes
+     loop:
+       - apt-transport-https
+       - ca-certificates
+       - curl
+       - gnupg-agent
+       - software-properties-common
+          
+   - name: get public ip
+     community.general.ipify_facts:
+
+   - name: add GPG key
+     apt_key:
+       url: https://download.docker.com/linux/ubuntu/gpg
+       state: present
+
+   - name: add docker repository to apt
+     apt_repository:
+       repo: deb https://download.docker.com/linux/ubuntu bionic stable
+       state: present
+
+   - name: install docker
+     apt:
+       name: "{{ item }}"
+       state: latest
+       update_cache: yes
+     loop:
+       - docker-ce
+       - docker-ce-cli
+       - containerd.io
+
+   - name: Ensure docker deamon is running
+     service:
+       name: docker
+       state: started
+     
+   - name: create env file
+     template:
+       src: templates/env.j2
+       dest: ".env"
+       
+   - name: Install python for docker in order to login to ACR
+     apt:
+       name: python3-docker
+       state: present
+       
+   - name: Azure Container Registry login
+     docker_login:
+       registry_url: "{{ acr_url }}"
+       username: "{{ acr_user_name }}"
+       password: "{{ acr_pass }}"
+           
+   - name: clean old docker containers
+     shell:
+       cmd: docker rm -f $(docker ps -aq)
+     ignore_errors: yes
+     
+   
+   - name: run image
+     shell:
+       cmd: docker run -d --name bootcamp-app --env-file .env -p 8080:8080 --restart unless-stopped kfir1200.azurecr.io/bootcamp-app:{{ docker_tag }}       
+

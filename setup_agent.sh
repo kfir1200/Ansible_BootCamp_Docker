@@ -1,10 +1,10 @@
 
 #!/bin/bash
 
-#setup and configure aget in azure devops
+#setup and configure agent in azure devops
 mkdir myagent && cd myagent
 wget https://vstsagentpackage.azureedge.net/agent/2.202.0/vsts-agent-linux-x64-2.202.0.tar.gz
-tar zxvf ~/vsts-agent-linux-x64-2.202.0.tar.gz 
+tar zxvf vsts-agent-linux-x64-2.202.0.tar.gz 
 
 ./config.sh --unattended \
 --url <your_devops_organization_url \

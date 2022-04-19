@@ -1,7 +1,8 @@
 
 # Description 
 
-In this project i used ansible to deploy the ![weight tracker application](https://github.com/kfir1200/bootcamp-app).
+In this project i used ansible to deploy the ![weight tracker application](https://github.com/kfir1200/bootcamp-app) .
+Also i used Dokcer to package the application together with it dependencies and runtime.
 
 The infrastracture was build using terraform: https://github.com/kfir1200/Terraform_BootCamp
 

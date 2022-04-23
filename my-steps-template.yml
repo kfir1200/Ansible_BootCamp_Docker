@@ -1,0 +1,38 @@
+    parameters:
+
+    - name: DownloadSecureFile_task_name
+      type: string 
+
+    - name: DownloadSecureFile_name
+      type: string 
+
+    - name: DownloadSecureFile_task_display_name
+      type: string 
+
+    - name: Ansible_command
+      type: string 
+
+    - name: Ansible_playbook_path
+      type: string 
+      default: /home/kfir1200/Ansible/main.yml
+    
+    steps:
+     - task: DownloadSecureFile@1
+       name: ${{ parameters.DownloadSecureFile_task_name }}
+       inputs:
+         secureFile: ${{ parameters.DownloadSecureFile_name }}
+       displayName: ${{ parameters.DownloadSecureFile_task_display_name }}
+
+     - task: DownloadSecureFile@1
+       name: acr_secrets
+       inputs:
+          secureFile: 'acr_secrets.yml'
+       displayName: "Download Azure Container Registry variable file"
+          
+     - task: Ansible@0
+       inputs:
+          ansibleInterface: 'agentMachine'
+          playbookPathOnAgentMachine: ${{ parameters.Ansible_playbook_path }}
+          inventoriesAgentMachine: 'noInventory'
+          args: ${{ parameters.ansible_command }}
+          

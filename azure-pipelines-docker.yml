@@ -1,0 +1,88 @@
+name: 'Docker-CI-CD-$(rev:r)'
+
+trigger:
+- main
+- feature/*
+
+pool:
+  name: "BootCamp"
+
+variables:
+
+  tag_number: $[counter(variables['BuildDefinitionName'], 1)]
+  my_docker_tag: "v$(tag_number)"
+  ansible_stage_command: '-i /home/kfir1200/Ansible/inventories/stage --extra-vars server_env_group="stage_servers env=stage docker_tag=$(my_docker_tag) acr_secrets_path=$(acr_secrets.secureFilePath) env_file_path=$(env_var_stage.secureFilePath)"'
+  ansible_prod_command: '-i /home/kfir1200/Ansible/inventories/prod --extra-vars server_env_group="prod_servers env=prod docker_tag=$(my_docker_tag) acr_secrets_path=$(acr_secrets.secureFilePath) env_file_path=$(env_var_prod.secureFilePath)"'
+  ansible_playbook_path: '/home/kfir1200/Ansible/main.yml'
+  container_registry_name: 'Azure Container Registry'
+  container_repository_name: 'bootcamp-app'
+ 
+stages:
+
+#Continuous Integration Process
+- stage: CI
+  displayName: Build
+  jobs:
+  - job: BuildAndPushDocker
+    workspace: 
+      clean: all
+    steps:
+      - task: Docker@2
+        inputs:
+          containerRegistry: $(container_registry_name)
+          repository: $(container_repository_name)
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          tags: $(my_docker_tag)     
+
+# Continuous Deployment Process for Staging Environment
+- stage: DeployToStaging
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  dependsOn: CI
+  jobs:
+  - deployment: staging
+    displayName: Deploy to Staging
+    environment:
+      name: Docker_Staging
+    pool:
+      name: "BootCamp"
+      demands:
+        - agent.name -equals ansible-vm-staging
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - template: my-steps-template.yml
+            parameters:
+              DownloadSecureFile_task_name: "env_var_stage"
+              DownloadSecureFile_name: "stage.yml"
+              DownloadSecureFile_task_display_name: "Download staging variable file"
+              Ansible_command: $(ansible_stage_command)
+
+
+#Continuous Deployment Process for Production Environment
+
+- stage: DeployToProduction
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  dependsOn: DeployToStaging
+  jobs:
+  - deployment: prod
+    displayName: Deploy to Production
+    environment:
+      name: Docker_Production
+    pool:
+      name: "BootCamp"
+      demands:
+        - agent.name -equals ansible-vm-prod
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - template: my-steps-template.yml
+            parameters:
+              DownloadSecureFile_task_name: "env_var_prod"
+              DownloadSecureFile_name: "prod.yml"
+              DownloadSecureFile_task_display_name: "Download production variable file"
+              Ansible_command: $(ansible_prod_command)       

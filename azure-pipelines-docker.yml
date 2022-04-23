@@ -61,7 +61,7 @@ stages:
               Ansible_command: $(ansible_stage_command)
 
 
-#Continuous Deployment Process for Production Environment
+# Continuous Delivery Process for Production Environment
 
 - stage: DeployToProduction
   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/main'))
